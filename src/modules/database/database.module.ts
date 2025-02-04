@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import mongoose from 'mongoose';
 import { IConfiguration } from 'src/core/config/Iconfig/configuration';
 
 @Module({
@@ -13,9 +14,19 @@ import { IConfiguration } from 'src/core/config/Iconfig/configuration';
         uri: configService.get<IConfiguration['connectionUrl']>(
           'connectionUrl',
         ),
-        connectTimeoutMS: 10000, // Connection timeout of 10 seconds
-        socketTimeoutMS: 45000, // Socket timeout of 45 seconds
-        retryWrites: false, // Enables or disables automatic retry on write errors
+        connectionFactory: () => {
+          const connection = mongoose.connection;
+          setTimeout(
+            () =>
+              mongoose.connect(
+                configService.get<IConfiguration['connectionUrl']>(
+                  'connectionUrl',
+                ),
+              ),
+            5000,
+          );
+          return connection;
+        },
       }),
     }),
     //example to connect to postgres
